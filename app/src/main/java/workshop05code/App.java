@@ -29,7 +29,7 @@ public class App {
 
     private static final Logger logger = Logger.getLogger(App.class.getName());
     // End code for logging exercise
-    
+
     /**
      * @param args the command line arguments
      */
@@ -39,55 +39,65 @@ public class App {
         wordleDatabaseConnection.createNewDatabase("words.db");
         if (wordleDatabaseConnection.checkIfConnectionDefined()) {
             System.out.println("Wordle created and connected.");
+            logger.info("Database connected and Wordle game initialized.");
         } else {
             System.out.println("Not able to connect. Sorry!");
+            logger.severe("Database connection failed.");
             return;
         }
+
         if (wordleDatabaseConnection.createWordleTables()) {
             System.out.println("Wordle structures in place.");
+            logger.info("Wordle structures successfully created.");
         } else {
             System.out.println("Not able to launch. Sorry!");
+            logger.severe("Failed to create Wordle structures.");
             return;
         }
 
-        // let's add some words to valid 4 letter words from the data.txt file
-
+        // Let's add some words to valid 4 letter words from the data.txt file
         try (BufferedReader br = new BufferedReader(new FileReader("resources/data.txt"))) {
             String line;
             int i = 1;
             while ((line = br.readLine()) != null) {
                 System.out.println(line);
                 wordleDatabaseConnection.addValidWord(i, line);
+                logger.info("Added word to database: " + line);
                 i++;
             }
-
         } catch (IOException e) {
-            System.out.println("Not able to load . Sorry!");
+            System.out.println("Not able to load. Sorry!");
             System.out.println(e.getMessage());
+            logger.severe("Failed to load words from file: " + e.getMessage());
             return;
         }
 
-        // let's get them to enter a word
-
+        // Let's get them to enter a word
         try (Scanner scanner = new Scanner(System.in)) {
-            System.out.print("Enter a 4 letter word for a guess or q to quit: ");
-            String guess = scanner.nextLine();
+            String guess;
+            do {
+                System.out.print("Enter a 4 letter word for a guess or q to quit: ");
+                guess = scanner.nextLine();
 
-            while (!guess.equals("q")) {
-                System.out.println("You've guessed '" + guess+"'.");
-
-                if (wordleDatabaseConnection.isValidWord(guess)) { 
-                    System.out.println("Success! It is in the the list.\n");
-                }else{
-                    System.out.println("Sorry. This word is NOT in the the list.\n");
+                if (guess.equals("q")) {
+                    System.out.println("Exiting the game.");
+                    logger.info("User exited the game.");
+                    break;
                 }
 
-                System.out.print("Enter a 4 letter word for a guess or q to quit: " );
-                guess = scanner.nextLine();
-            }
+                System.out.println("You've guessed '" + guess + "'.");
+
+                if (wordleDatabaseConnection.isValidWord(guess)) {
+                    System.out.println("Success! It is in the list.\n");
+                    logger.info("Correct guess: " + guess);
+                } else {
+                    System.out.println("Sorry. This word is NOT in the list.\n");
+                    logger.warning("Incorrect guess: " + guess);
+                }
+            } while (!guess.equals("q"));
         } catch (NoSuchElementException | IllegalStateException e) {
             e.printStackTrace();
+            logger.severe("Error occurred while reading user input: " + e.getMessage());
         }
-
     }
 }
